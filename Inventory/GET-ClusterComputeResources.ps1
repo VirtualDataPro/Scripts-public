@@ -3,40 +3,40 @@ param(
     [string[]]$vmcluster
     )
 	
-#Define Report Array
+# Define Report Array
 $Report = @()
 
-#Get Clusters
+# Get Clusters
 $AllClusters = Get-Cluster $vmcluster | ?{$_.ExtensionData.Summary.NumEffectiveHosts -gt 1}
 
 ForEach($Cluster in $AllClusters){
-        #Reset Counters
+        # Reset Counters
         $cVmem = 0
         $cVcpu = 0
         $ccpu = 0
 
-        #Reset Object
+        # Reset Object
         $ClusterInfo = New-Object System.Object
 
-        #Count Effective Cores
+        # Count Effective Cores
         $Cluster | Get-VMHost | ?{$_.ConnectionState -eq "Connected"} | %{
                 $ccpu = $_.ExtensionData.Hardware.CpuInfo.NumCpuCores+$ccpu
         }
 
-        #Count VM Allocation
+        # Count VM Allocation
         $Cluster | Get-VM |?{$_.PowerState -eq "PoweredOn"} | %{
                 $cVmem = $_.MemoryGB+$cVmem
                 $cVcpu = $_.NumCpu+$cVcpu
         }
 
-        #Get Cluster Largest MemoryGB Host Value
+        # Get Cluster Largest MemoryGB Host Value
         $BigMem = [math]::round(( $Cluster | Get-VMHost | sort MemoryTotalGB -Descending | Select-Object -First 1).MemoryTotalGB)
 
-        #Define Custom Metrics
+        # Define Custom Metrics
         $MemoryFull = [math]::round(($cVmem/($Cluster.ExtensionData.Summary.EffectiveMemory/1kb))* 100)
         $CPUratio = [math]::round($cvcpu/$ccpu,2)
 
-        #Add properties to object
+        # Add properties to object
         $ClusterInfo | Add-Member -Type NoteProperty -Name "Cluster" -Value $Cluster.name
         $ClusterInfo | Add-Member -Type NoteProperty -Name "ClusterMemoryUsage" -Value $MemoryFull
         $ClusterInfo | Add-Member -Type NoteProperty -Name "CPUratio" -Value $CPUratio
@@ -51,7 +51,7 @@ ForEach($Cluster in $AllClusters){
         $NEH = $ClusterInfo.NumEffectiveHosts
         $FailCount = 0
 
-        #Host Failure Forecasting "Playing with Numbers"
+        # Host Failure Forecasting "Playing with Numbers"
         While($MemoryFull -lt 100){
                 $FailCount = $FailCount + 1
                 $NEH = $NEH - 1
@@ -79,7 +79,7 @@ ForEach($Cluster in $AllClusters){
 		
 		$ClusterInfo | Add-Member -Type NoteProperty -Name "MaxFailures" -Value ($FailCount - 1)
 		
-        #Add Cluster Object to Array
+        # Add Cluster Object to Array
         $Report += $Clusterinfo
 }
 
