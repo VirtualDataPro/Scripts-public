@@ -1,0 +1,21 @@
+.DS_Store
+**/.DS_Store
+
+# Local credentials and environment-specific configuration
+.env
+.env.*
+!.env.example
+*.credential
+*.credentials
+*.key
+*.pem
+*.pfx
+*.p12
+secrets.*
+
+# Generated reports, exports, logs, and editor state
+Reports/*.csv
+*.log
+*.tmp
+.vscode/
+.idea/

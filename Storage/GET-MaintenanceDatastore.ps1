@@ -1,0 +1,1 @@
+Get-Datastore | ?{$_.state -eq "Maintenance"} |  Select Name,@{N="DiskName";E={$_.ExtensionData.Info.Vmfs.Extent.DiskName}}, capacitygb
